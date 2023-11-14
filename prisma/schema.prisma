@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  events       Event[]
+  tickets      Ticket[]
+  reviews      Review[]
+
+  @@map("users")
+}
+
+model Event {
+  id           String   @id @default(uuid())
+  user         User     @relation(fields: [organizerId], references: [id])
+  organizerId  String   @map("organizer_id")
+  name         String
+  category     Category @relation(fields: [categoryName], references: [name])
+  categoryName String   @map("category_name")
+  description  String?
+  startTime    DateTime @map("start_time")
+  endTime      DateTime @map("end_time")
+  location     String?
+  tickets      Ticket[]
+  reviews      Review[]
+
+  @@map("events")
+}
+
+model Category {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  events      Event[]
+
+  @@map("categories")
+}
+
+model Ticket {
+  id      String   @id @default(uuid())
+  event   Event    @relation(fields: [eventId], references: [id])
+  eventId String   @map("event_id")
+  label   String?
+  amount  Int
+  price   Decimal?
+  users   User[]
+
+  @@map("tickets")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   String   @map("event_id")
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @map("user_id")
+  rating    Decimal
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("reviews")
+}
