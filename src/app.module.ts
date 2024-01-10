@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './modules/auth/auth.module';
-import { AppConfigModule } from './modules/config/app-config-module.module';
+import { AppConfigModule } from './modules/config/app-config.module';
 import * as process from 'process';
 
 @Module({

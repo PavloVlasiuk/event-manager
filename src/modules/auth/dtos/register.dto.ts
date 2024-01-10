@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsEmail, IsString } from 'class-validator';
-import { validationOptionsMsg } from 'src/utils/validationOptionsMsg';
+import { validationOptionsMsg } from 'src/common/validationOptionsMsg';
 
 export class RegistrationDTO {
   @IsString(validationOptionsMsg('Username must be a string'))
