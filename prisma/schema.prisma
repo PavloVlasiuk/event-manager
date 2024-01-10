@@ -11,10 +11,11 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  email        String   @unique
-  passwordHash String   @map("password_hash")
+  id           String        @id @default(uuid())
+  username     String        @unique
+  email        String        @unique
+  passwordHash String        @map("password_hash")
+  refreshToken RefreshToken?
   events       Event[]
   tickets      Ticket[]
   reviews      Review[]
@@ -71,4 +72,14 @@ model Review {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("reviews")
+}
+
+model RefreshToken {
+  User      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique @map("user_id")
+  token     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("refresh_token")
 }
