@@ -10,11 +10,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum State {
+  APPROVED
+  PENDING
+  DECLINED
+}
+
 model User {
   id           String        @id @default(uuid())
   username     String        @unique
   email        String        @unique
   passwordHash String        @map("password_hash")
+  state        State         @default(PENDING)
   refreshToken RefreshToken?
   events       Event[]
   tickets      Ticket[]
@@ -82,4 +89,12 @@ model RefreshToken {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("refresh_token")
+}
+
+model VerifyEmailToken {
+  token     String   @id @default(uuid())
+  email     String   
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("verify_email_tokens")
 }
