@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { RegistrationDTO, TokensDTO } from './dtos';
+import { RegistrationDTO } from './dtos';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { JwtService } from '@nestjs/jwt';
@@ -15,6 +15,7 @@ import {
   InvalidEntityIdException,
   InvalidEmailTokenException,
 } from 'src/common/exceptions/index';
+import { AccessTokenResponse, TokensResponse } from './responses';
 
 @Injectable()
 export class AuthService {
@@ -57,7 +58,7 @@ export class AuthService {
     await this.userRepository.create(data);
   }
 
-  async verify(token: string): Promise<TokensDTO> {
+  async verify(token: string): Promise<TokensResponse> {
     const tokenBody = await this.prisma.verifyEmailToken.findFirst({
       where: { token },
     });
@@ -82,7 +83,7 @@ export class AuthService {
     return tokens;
   }
 
-  async login(user: User): Promise<TokensDTO> {
+  async login(user: User): Promise<TokensResponse> {
     if (user.state !== State.APPROVED) {
       throw new UnauthorizedException('Email address is not verified yet');
     }
@@ -94,7 +95,7 @@ export class AuthService {
     return tokens;
   }
 
-  async refresh(user: User, refreshToken: string): Promise<{ accessToken: string }> {
+  async refresh(user: User, refreshToken: string): Promise<AccessTokenResponse> {
     const token = await this.refreshTokenRepository.findByUserId(user.id);
     if (!token) {
       throw new UnauthorizedException();
@@ -122,7 +123,7 @@ export class AuthService {
     return await bcrypt.hash(password, salt);
   }
 
-  private getAccessToken(user: User): { accessToken: string } {
+  private getAccessToken(user: User): AccessTokenResponse {
     const payload = this.createPayload(user);
 
     const accessToken = this.jwtService.sign(payload, {
@@ -135,7 +136,7 @@ export class AuthService {
     };
   }
 
-  private getTokens(user: User): TokensDTO {
+  private getTokens(user: User): TokensResponse {
     const payload = this.createPayload(user);
 
     const secret = this.securityConfig.secret;
