@@ -6,11 +6,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './security/strategies/jwt.strategy';
 import { LocalStrategy } from './security/strategies/local.strategy';
 import { AppConfigModule } from '../config/app-config.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],
   exports: [AuthService],
-  imports: [PrismaModule, JwtModule.register({}), AppConfigModule],
+  imports: [PrismaModule, JwtModule.register({}), AppConfigModule, EmailModule],
 })
 export class AuthModule {}

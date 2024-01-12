@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegistrationDTO, TokensDTO } from './dtos';
 import { LocalAuthGuard } from './security/guards/local-auth.guard';
@@ -9,8 +9,13 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() body: RegistrationDTO): Promise<TokensDTO> {
+  async register(@Body() body: RegistrationDTO): Promise<void> {
     return await this.authService.register(body);
+  }
+
+  @Post('verify/:token')
+  async verify(@Param('token') token: string): Promise<TokensDTO> {
+    return await this.authService.verify(token);
   }
 
   @UseGuards(LocalAuthGuard)
