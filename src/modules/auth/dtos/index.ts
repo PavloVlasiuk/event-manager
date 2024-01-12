@@ -1,2 +1,2 @@
 export * from '../dtos/register.dto';
-export * from '../dtos/tokens.dto';
+export * from './login.dto';
