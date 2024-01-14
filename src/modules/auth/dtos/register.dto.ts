@@ -21,6 +21,6 @@ export class RegistrationDTO {
     description: 'User\'s password to access the application',
   })
   @IsString()
-  @IsNotEmpty(validationOptionsMsg('Password cannot be null'))
+  @IsNotEmpty(validationOptionsMsg('Password cannot be empty'))
     password: string;
 }

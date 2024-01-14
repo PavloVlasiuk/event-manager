@@ -16,6 +16,8 @@ import {
   InvalidEmailTokenException,
 } from 'src/common/exceptions/index';
 import { AccessTokenResponse, TokensResponse } from './responses';
+import { UpdatePasswordDTO } from './dtos/update-password.dto';
+import { IdenticalPasswordException } from 'src/common/exceptions/identical-password.exception';
 
 @Injectable()
 export class AuthService {
@@ -108,6 +110,24 @@ export class AuthService {
     return this.getAccessToken(user);
   }
 
+  async updatePassword(
+    { oldPassword, newPassword }: UpdatePasswordDTO,
+    userId: string,
+  ): Promise<TokensResponse> {
+    if (oldPassword === newPassword) {
+      throw new IdenticalPasswordException();
+    }
+
+    const passwordHash = await this.hashPassword(newPassword);
+
+    const user = await this.userRepository.update({ id: userId }, { passwordHash });
+
+    const tokens = this.getTokens(user);
+    await this.refreshTokenRepository.updateByUserId(user.id, tokens.refreshToken);
+    
+    return tokens;
+  }
+
   private async isRegistered(username: string, email: string): Promise<boolean> {
     const user = await this.userRepository.find({
       OR: [{ username }, { email }],
@@ -120,7 +140,7 @@ export class AuthService {
     const saltRounds = 10;
     const salt = await bcrypt.genSalt(saltRounds);
 
-    return await bcrypt.hash(password, salt);
+    return bcrypt.hash(password, salt);
   }
 
   private getAccessToken(user: User): AccessTokenResponse {

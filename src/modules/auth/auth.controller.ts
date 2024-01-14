@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDTO, RegistrationDTO } from './dtos';
 import { LocalAuthGuard } from './security/guards/local-auth.guard';
@@ -8,12 +8,14 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AccessTokenResponse, TokensResponse } from './responses';
+import { UpdatePasswordDTO } from './dtos/update-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -100,5 +102,26 @@ export class AuthController {
     const refreshToken = req.headers.authorization.split(' ')[1];
 
     return this.authService.refresh(req.user, refreshToken);
+  }
+
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    type: TokensResponse,
+  })
+  @ApiBadRequestResponse({
+    description: `
+    New and old passwords must be different`,
+  })
+  @ApiUnauthorizedResponse({
+    description: `
+      Unauthorized`,
+  })
+  @ApiOperation({
+    summary: 'Set new password to the account using old password',
+  })
+  @UseGuards(JwtGuard)
+  @Patch('updatePassword')
+  async updatePassword(@Body() body: UpdatePasswordDTO, @Request() req): Promise<TokensResponse> {
+    return this.authService.updatePassword(body, req.user.id);
   }
 }
