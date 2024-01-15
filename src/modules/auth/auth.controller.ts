@@ -1,8 +1,15 @@
 import { Body, Controller, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDTO, RegistrationDTO } from './dtos';
 import { LocalAuthGuard } from './security/guards/local-auth.guard';
 import { JwtGuard } from './security/guards/jwt.guard';
+import { AccessTokenResponse, TokensResponse } from './responses';
+import {
+  ForgotPasswordDTO,
+  LoginDTO,
+  RegistrationDTO,
+  UpdatePasswordDTO,
+  ResetPasswordDTO,
+} from './dtos';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -14,8 +21,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AccessTokenResponse, TokensResponse } from './responses';
-import { UpdatePasswordDTO } from './dtos/update-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -26,10 +31,15 @@ export class AuthController {
   @ApiBadRequestResponse({
     description: `
       Username must be a string
+      Username must contain from 2 to 30 characters, include only latin letters, numbers and \'_-\' characters
       Username cannot be empty
+      Email must be an email address
       Email cannot be empty
-      Password cannot be null
-      User is already registered`,
+      Password must be a string
+      Password must contain from 8 to 32 characters, include at least 1 letter and 1 number
+      Password cannot be empty
+      User is already registered
+      `,
   })
   @ApiOperation({
     summary: 'Register new user',
@@ -110,7 +120,10 @@ export class AuthController {
   })
   @ApiBadRequestResponse({
     description: `
-    New and old passwords must be different`,
+      Password must be a string
+      Password must contain from 8 to 32 characters, include at least 1 letter and 1 number
+      Password cannot be empty
+      New and old passwords must be different`,
   })
   @ApiUnauthorizedResponse({
     description: `
@@ -123,5 +136,45 @@ export class AuthController {
   @Patch('updatePassword')
   async updatePassword(@Body() body: UpdatePasswordDTO, @Request() req): Promise<TokensResponse> {
     return this.authService.updatePassword(body, req.user.id);
+  }
+
+  @ApiCreatedResponse()
+  @ApiBadRequestResponse({
+    description: `
+      Email must be an email address
+      Email cannot be empty
+      User is not registered`,
+  })
+  @ApiOperation({
+    summary: 'Send a link to email address to create new password',
+  })
+  @Post('forgotPassword')
+  async forgotPassword(@Body() body: ForgotPasswordDTO): Promise<void> {
+    return this.authService.forgotPassword(body.email);
+  }
+
+  @ApiCreatedResponse()
+  @ApiBadRequestResponse({
+    description: `
+      Password must be a string
+      Password must contain from 8 to 32 characters, include at least 1 letter and 1 number
+      Password cannot be empty
+      Email verification token is invalid`,
+  })
+  @ApiParam({
+    name: 'token',
+    type: String,
+    required: true,
+    description: 'Email verification token',
+  })
+  @ApiOperation({
+    summary: 'Reset old password and set new password',
+  })
+  @Post('resetPassword/:token')
+  async resetPassword(
+    @Param('token') token: string,
+    @Body() body: ResetPasswordDTO,
+  ): Promise<void> {
+    return this.authService.resetPassword(token, body.password);
   }
 }

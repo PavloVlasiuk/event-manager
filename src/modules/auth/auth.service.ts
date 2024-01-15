@@ -1,23 +1,25 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { RegistrationDTO } from './dtos';
+import { RegistrationDTO, UpdatePasswordDTO } from './dtos';
 import * as bcrypt from 'bcrypt';
-import { UserRepository } from 'src/database/repositories/user.repository';
 import { JwtService } from '@nestjs/jwt';
-import { State, User } from '@prisma/client';
+import { State, TokenAssignment, User } from '@prisma/client';
 import { JwtPayload } from './types/jwt-payload.type';
-import { RefreshTokenRepository } from 'src/database/repositories/refresh-token.repository';
 import { SecurityCongigService } from '../config/security-config.service';
-import { PrismaService } from 'src/database/prisma.service';
-import { HOUR } from 'src/common/constants/time.constans';
+import { HOUR } from 'src/common/constants';
 import { EmailService } from '../email/email.service';
+import { AccessTokenResponse, TokensResponse } from './responses';
+import {
+  UserRepository,
+  RefreshTokenRepository,
+  EmailTokenRepository,
+} from 'src/database/repositories';
 import {
   AlreadyRegisteredException,
   InvalidEntityIdException,
   InvalidEmailTokenException,
-} from 'src/common/exceptions/index';
-import { AccessTokenResponse, TokensResponse } from './responses';
-import { UpdatePasswordDTO } from './dtos/update-password.dto';
-import { IdenticalPasswordException } from 'src/common/exceptions/identical-password.exception';
+  IdenticalPasswordException,
+  NotRegisteredException,
+} from 'src/common/exceptions';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +29,7 @@ export class AuthService {
     private securityConfig: SecurityCongigService,
     private refreshTokenRepository: RefreshTokenRepository,
     private readonly emailService: EmailService,
-    private readonly prisma: PrismaService,
+    private readonly emailTokenRepository: EmailTokenRepository,
   ) {}
 
   async validateUser(username: string, password: string) {
@@ -61,9 +63,7 @@ export class AuthService {
   }
 
   async verify(token: string): Promise<TokensResponse> {
-    const tokenBody = await this.prisma.verifyEmailToken.findFirst({
-      where: { token },
-    });
+    const tokenBody = await this.emailTokenRepository.find({ token });
 
     if (!tokenBody) {
       throw new InvalidEmailTokenException();
@@ -74,7 +74,7 @@ export class AuthService {
       { state: State.APPROVED },
     );
 
-    await this.prisma.verifyEmailToken.delete({ where: { token } });
+    await this.emailTokenRepository.delete({ token });
 
     const tokens = this.getTokens(user);
     await this.refreshTokenRepository.create({
@@ -124,8 +124,38 @@ export class AuthService {
 
     const tokens = this.getTokens(user);
     await this.refreshTokenRepository.updateByUserId(user.id, tokens.refreshToken);
-    
+
     return tokens;
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const isRegistered = await this.isRegistered('', email);
+
+    if (!isRegistered) {
+      throw new NotRegisteredException();
+    }
+
+    const token = await this.createEmailToken(email, TokenAssignment.RESETTING);
+
+    await this.emailService.sendTemplatedEmail({
+      to: email,
+      subject: 'Request to change password on event manager',
+      message: 'To change your password follow link below. It is valid during a hour.',
+      link: `${process.env.FRONT_BASE_URL}/verify/${token}`,
+    });
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    const tokenBody = await this.emailTokenRepository.find({ token });
+
+    if (!tokenBody) {
+      throw new InvalidEmailTokenException();
+    }
+
+    const passwordHash = await this.hashPassword(password);
+
+    await this.userRepository.update({ email: tokenBody.email }, { passwordHash });
+    await this.emailTokenRepository.delete({ token: tokenBody.token });
   }
 
   private async isRegistered(username: string, email: string): Promise<boolean> {
@@ -189,21 +219,7 @@ export class AuthService {
   }
 
   private async requestEmailVerification(email: string): Promise<void> {
-    const tokenExists = await this.prisma.verifyEmailToken.findFirst({
-      where: { email },
-    });
-
-    if (tokenExists) {
-      await this.prisma.verifyEmailToken.deleteMany({
-        where: { email },
-      });
-    }
-
-    const { token } = await this.prisma.verifyEmailToken.create({
-      data: {
-        email,
-      },
-    });
+    const token = await this.createEmailToken(email, TokenAssignment.VERIFICATION);
 
     await this.emailService.sendTemplatedEmail({
       to: email,
@@ -211,11 +227,36 @@ export class AuthService {
       message: 'To verify your email follow link below. It is valid during a hour.',
       link: `${process.env.FRONT_BASE_URL}/verify/${token}`,
     });
+  }
+
+  private async createEmailToken(email: string, tokenAssignment: TokenAssignment): Promise<string> {
+    await this.checkIfTokenAlreadyExists(email, tokenAssignment);
+
+    const { token } = await this.emailTokenRepository.create({
+      email,
+      tokenAssignment,
+    });
 
     new Promise((resolve) => {
       setTimeout(() => {
-        resolve(this.prisma.verifyEmailToken.delete({ where: { token } }));
+        resolve(this.emailTokenRepository.delete({ token }));
       }, HOUR);
     });
+
+    return token;
+  }
+
+  private async checkIfTokenAlreadyExists(
+    email: string,
+    tokenAssignment: TokenAssignment,
+  ): Promise<void> {
+    const tokenExists = await this.emailTokenRepository.find({
+      email,
+      tokenAssignment,
+    });
+
+    if (tokenExists) {
+      await this.emailTokenRepository.delete({ token: tokenExists.token });
+    }
   }
 }

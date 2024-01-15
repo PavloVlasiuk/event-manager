@@ -91,10 +91,16 @@ model RefreshToken {
   @@map("refresh_token")
 }
 
-model VerifyEmailToken {
-  token     String   @id @default(uuid())
-  email     String   
-  createdAt DateTime @default(now()) @map("created_at")
+enum TokenAssignment {
+  VERIFICATION
+  RESETTING
+}
 
-  @@map("verify_email_tokens")
+model EmailToken {
+  token           String          @id @default(uuid())
+  email           String
+  tokenAssignment TokenAssignment @map("token_assignment")
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  @@map("email_tokens")
 }
