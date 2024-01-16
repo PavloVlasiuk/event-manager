@@ -23,6 +23,7 @@ model User {
   passwordHash String        @map("password_hash")
   state        State         @default(PENDING)
   refreshToken RefreshToken?
+  roles        UserRole[]
   events       Event[]
   tickets      Ticket[]
   reviews      Review[]
@@ -103,4 +104,45 @@ model EmailToken {
   createdAt       DateTime        @default(now()) @map("created_at")
 
   @@map("email_tokens")
+}
+
+enum RoleName {
+  USER
+  ORGANIZER
+  MODERATOR
+  ADMIN
+}
+
+model Role {
+  id          String       @id @default(uuid())
+  name        RoleName
+  permissions Permission[]
+  users       UserRole[]
+  createdAt   DateTime?    @default(now()) @map("created_at")
+  updatedAt   DateTime?    @default(now()) @updatedAt @map("updated_at")
+
+  @@map("roles")
+}
+
+model UserRole {
+  user      User      @relation(references: [id], fields: [userId], onDelete: Cascade)
+  userId    String    @map("user_id")
+  role      Role      @relation(references: [id], fields: [roleId], onDelete: Cascade)
+  roleId    String    @map("role_id")
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @default(now()) @updatedAt @map("updated_at")
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Permission {
+  id        String    @id @default(uuid())
+  name      String
+  role      Role      @relation(references: [id], fields: [roleId], onDelete: Cascade)
+  roleId    String    @map("role_id")
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @default(now()) @updatedAt @map("updated_at")
+
+  @@map("permissions")
 }
