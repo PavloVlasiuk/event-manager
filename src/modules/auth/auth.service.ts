@@ -15,7 +15,7 @@ import {
 } from 'src/database/repositories';
 import {
   AlreadyRegisteredException,
-  InvalidEntityIdException,
+  EntityNotFoundException,
   InvalidEmailTokenException,
   IdenticalPasswordException,
   NotRegisteredException,
@@ -36,7 +36,7 @@ export class AuthService {
     const user = await this.userRepository.find({ username });
 
     if (!user) {
-      throw new InvalidEntityIdException('User');
+      throw new EntityNotFoundException('User');
     }
 
     const matchPassword = await this.checkPassword(password, user.passwordHash);

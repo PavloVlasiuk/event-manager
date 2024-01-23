@@ -27,4 +27,18 @@ export class RoleRepository {
       include: this.include,
     });
   }
+
+  async update(where: Prisma.RoleWhereUniqueInput, data: Prisma.RoleUncheckedUpdateInput): Promise<Role> {
+    return this.prisma.role.update({
+      where,
+      data,
+    });
+  }
+
+  async updateMany(where: Prisma.RoleWhereInput, data: Prisma.RoleUncheckedUpdateInput): Promise<Prisma.BatchPayload> {
+    return this.prisma.role.updateMany({
+      where,
+      data,
+    });
+  }
 }
