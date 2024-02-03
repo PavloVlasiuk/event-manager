@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { RegistrationDTO, UpdatePasswordDTO } from './dtos';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { State, TokenAssignment, User } from '@prisma/client';
+import { RoleName, State, TokenAssignment, User } from '@prisma/client';
 import { JwtPayload } from './types/jwt-payload.type';
 import { SecurityCongigService } from '../config/security-config.service';
 import { HOUR } from 'src/common/constants';
@@ -12,6 +12,7 @@ import {
   UserRepository,
   RefreshTokenRepository,
   EmailTokenRepository,
+  RoleRepository,
 } from 'src/database/repositories';
 import {
   AlreadyRegisteredException,
@@ -24,10 +25,11 @@ import {
 @Injectable()
 export class AuthService {
   constructor(
-    private userRepository: UserRepository,
-    private jwtService: JwtService,
-    private securityConfig: SecurityCongigService,
-    private refreshTokenRepository: RefreshTokenRepository,
+    private readonly userRepository: UserRepository,
+    private readonly roleRepository: RoleRepository,
+    private readonly jwtService: JwtService,
+    private readonly securityConfig: SecurityCongigService,
+    private readonly refreshTokenRepository: RefreshTokenRepository,
     private readonly emailService: EmailService,
     private readonly emailTokenRepository: EmailTokenRepository,
   ) {}
@@ -69,9 +71,24 @@ export class AuthService {
       throw new InvalidEmailTokenException();
     }
 
+    const roles = await this.roleRepository.findMany({
+      where: {
+        name: {
+          in: [RoleName.USER, RoleName.ORGANIZER],
+        },
+      },
+    });
+
     const user = await this.userRepository.update(
       { email: tokenBody.email },
-      { state: State.APPROVED },
+      {
+        state: State.APPROVED,
+        roles: {
+          createMany: {
+            data: roles.map(({ id }) => ({ roleId: id })),
+          },
+        },
+      },
     );
 
     await this.emailTokenRepository.delete({ token });

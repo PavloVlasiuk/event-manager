@@ -22,10 +22,11 @@ export class PermissionRepository {
     });
   }
 
-  // async updateById(id: string, data: Permission) {
-  //   return this.prisma.permission.update({
-  //     where: { id },
-  //     data,
-  //   });
-  // }
+  async deleteById(id: string): Promise<Permission> {
+    return this.prisma.permission.delete({
+      where: {
+        id,
+      },
+    });
+  }
 }

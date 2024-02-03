@@ -8,8 +8,8 @@ import { SecurityCongigService } from 'src/modules/config/security-config.servic
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
-    private securityConfig: SecurityCongigService,
-    private prisma: PrismaService,
+    private readonly securityConfig: SecurityCongigService,
+    private readonly prisma: PrismaService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
