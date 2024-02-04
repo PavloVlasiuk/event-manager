@@ -1,7 +1,9 @@
-import { Body, Controller, Param, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard, JwtGuard } from '../../security/guards';
 import { AccessTokenResponse, TokensResponse } from './responses';
+import { UserEntity } from 'src/database/entities';
+import { UserService } from '../users/user.service';
 import {
   ForgotPasswordDTO,
   LoginDTO,
@@ -26,6 +28,7 @@ import {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly userService: UserService,
   ) {}
 
   @ApiCreatedResponse()
@@ -177,5 +180,12 @@ export class AuthController {
     @Body() body: ResetPasswordDTO,
   ): Promise<void> {
     return this.authService.resetPassword(token, body.password);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @Get('profile')
+  getProfile(@Request() req): Promise<UserEntity> {
+    return this.userService.getUserWithRoles(req.user.id); 
   }
 }

@@ -8,11 +8,12 @@ import { AppConfigModule } from '../config/app-config.module';
 import { EmailModule } from '../email/email.module';
 import { LocalAuthGuard } from 'src/security/guards';
 import { SecurityModule } from 'src/security/security.module';
+import { UserModule } from '../users/user.module';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, LocalAuthGuard],
   exports: [AuthService],
-  imports: [PrismaModule, JwtModule.register({}), AppConfigModule, EmailModule, SecurityModule],
+  imports: [PrismaModule, JwtModule.register({}), AppConfigModule, EmailModule, SecurityModule, UserModule],
 })
 export class AuthModule {}

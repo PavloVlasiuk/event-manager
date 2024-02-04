@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { RoleEntity } from 'src/database/entities/role.entity';
+import { ADMIN_PERMISSIONS } from 'src/common/constants';
+import { RoleEntity } from 'src/database/entities';
 import { PermissionRepository, RoleRepository } from 'src/database/repositories';
 
 @Injectable()
@@ -13,7 +14,7 @@ export class PermissionService {
     return this.permissionRepository.deleteById(id);
   }
 
-  async matchPermissions(userId: string, permissions: string[]) {
+  async matchPermissions(userId: string, permissions: string[]): Promise<boolean> {
     const userRoles = await this.roleRepository.findMany({
       where: {
         users: {
@@ -22,13 +23,15 @@ export class PermissionService {
           },
         },
       },
-    }) as unknown as RoleEntity[];
+    });
 
     return this.matchPermissionsInRoles(userRoles, permissions);
   }
 
-  private matchPermissionsInRoles(roles: RoleEntity[], permissions: string[]) {
+  private matchPermissionsInRoles(roles: RoleEntity[], permissions: string[]): boolean {
     const rolesPermissions = this.getRolesPermissions(roles);
+
+    if (rolesPermissions.includes(ADMIN_PERMISSIONS)) return true;
 
     for (const permission of permissions) {
       if (!rolesPermissions.includes(permission)) return false;
@@ -37,7 +40,7 @@ export class PermissionService {
     return true;
   }
 
-  private getRolesPermissions(roles: RoleEntity[]) {
+  private getRolesPermissions(roles: RoleEntity[]): string[] {
     const rolesPermissions = [];
 
     for (const role of roles) {
