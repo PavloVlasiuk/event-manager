@@ -11,7 +11,11 @@ export class RoleRepository {
     permissions: true,
   };
 
-  async create(data: Prisma.RoleUncheckedCreateInput): Promise<RoleEntity> {
+  async createOrUpdate(data: Prisma.RoleUncheckedCreateInput): Promise<RoleEntity> {
+    const role = await this.find({ name: data.name });
+
+    if (role) return this.update({ name: data.name }, data);
+    
     return this.prisma.role.create({ data, include: this.include });
   }
 

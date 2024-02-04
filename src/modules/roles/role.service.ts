@@ -11,7 +11,7 @@ export class RoleService {
   ) {}
 
   async createRole(data: CreateRoleDTO): Promise<Role> {
-    return this.roleRepository.create(data);
+    return this.roleRepository.createOrUpdate(data);
   }
 
   async createPermission(roleId: string, permission: CreatePermissionDTO): Promise<Permission> {
