@@ -1,8 +1,9 @@
-import { Body, Controller, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './security/guards/local-auth.guard';
-import { JwtGuard } from './security/guards/jwt.guard';
+import { LocalAuthGuard, JwtGuard } from '../../security/guards';
 import { AccessTokenResponse, TokensResponse } from './responses';
+import { UserEntity } from 'src/database/entities';
+import { UserService } from '../users/user.service';
 import {
   ForgotPasswordDTO,
   LoginDTO,
@@ -25,7 +26,10 @@ import {
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
+  ) {}
 
   @ApiCreatedResponse()
   @ApiBadRequestResponse({
@@ -133,7 +137,7 @@ export class AuthController {
     summary: 'Set new password to the account using old password',
   })
   @UseGuards(JwtGuard)
-  @Patch('updatePassword')
+  @Post('updatePassword')
   async updatePassword(@Body() body: UpdatePasswordDTO, @Request() req): Promise<TokensResponse> {
     return this.authService.updatePassword(body, req.user.id);
   }
@@ -176,5 +180,12 @@ export class AuthController {
     @Body() body: ResetPasswordDTO,
   ): Promise<void> {
     return this.authService.resetPassword(token, body.password);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @Get('profile')
+  getProfile(@Request() req): Promise<UserEntity> {
+    return this.userService.getUserWithRoles(req.user.id); 
   }
 }

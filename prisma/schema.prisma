@@ -115,7 +115,7 @@ enum RoleName {
 
 model Role {
   id          String       @id @default(uuid())
-  name        RoleName
+  name        RoleName     @unique
   permissions Permission[]
   users       UserRole[]
   createdAt   DateTime?    @default(now()) @map("created_at")
@@ -138,7 +138,7 @@ model UserRole {
 
 model Permission {
   id        String    @id @default(uuid())
-  name      String
+  action    String
   role      Role      @relation(references: [id], fields: [roleId], onDelete: Cascade)
   roleId    String    @map("role_id")
   createdAt DateTime? @default(now()) @map("created_at")
