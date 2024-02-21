@@ -1,9 +1,13 @@
 import { Global, Module } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
-import { UserRepository } from './repositories/user.repository';
-import { RefreshTokenRepository } from './repositories/refresh-token.repository';
-import { EmailTokenRepository } from './repositories/email-token.repository';
-import { PermissionRepository, RoleRepository } from './repositories';
+import {
+  UserRepository,
+  RefreshTokenRepository,
+  EmailTokenRepository,
+  CategoryRepository,
+  PermissionRepository,
+  RoleRepository,
+} from './repositories';
 
 @Global()
 @Module({
@@ -14,6 +18,7 @@ import { PermissionRepository, RoleRepository } from './repositories';
     EmailTokenRepository,
     RoleRepository,
     PermissionRepository,
+    CategoryRepository,
   ],
   exports: [
     PrismaService,
@@ -22,6 +27,7 @@ import { PermissionRepository, RoleRepository } from './repositories';
     EmailTokenRepository,
     RoleRepository,
     PermissionRepository,
+    CategoryRepository,
   ],
 })
 export class PrismaModule {}
