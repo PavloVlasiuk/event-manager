@@ -8,6 +8,7 @@ import { SecurityModule } from './security/security.module';
 import { PermissionModule } from './modules/permissions/permission.module';
 import { UserModule } from './modules/users/user.module';
 import { MappperModule } from './mappers/mapper.module';
+import { CategoryModule } from './modules/categories/category.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { MappperModule } from './mappers/mapper.module';
       isGlobal: true,
       envFilePath: [`.${process.env.NODE_ENV}.env`],
     }),
+    CategoryModule,
   ],
 })
 export class AppModule {}

@@ -6,4 +6,8 @@ export enum Permissions {
 
   USER_ROLE_CREATE = 'user.role.create',
   USER_ROLE_DELETE = 'user.role.delete',
+
+  CATEGORY_CREATE = 'category.create',
+  CATEGORY_UPDATE = 'category.update',
+  CATEGORY_DELETE = 'category.delete'
 }

@@ -11,18 +11,22 @@ export class CategoryRepository {
     return this.prisma.category.create({ data });
   }
 
+  async findById(id: string): Promise<CategoryEntity | null> {
+    return this.prisma.category.findFirst({ where: { id } });
+  }
+
   async findMany(args?: Prisma.CategoryFindManyArgs): Promise<CategoryEntity[]> {
     return this.prisma.category.findMany({ ...args });
   }
 
-  async update(where: Prisma.CategoryWhereUniqueInput, data: Prisma.CategoryUpdateInput): Promise<CategoryEntity> {
+  async updateById(id: string, data: Prisma.CategoryUpdateInput): Promise<CategoryEntity> {
     return this.prisma.category.update({
-      where,
+      where: { id },
       data,
     });
   }
 
-  async delete(where: Prisma.CategoryWhereUniqueInput): Promise<CategoryEntity> {
-    return this.prisma.category.delete({ where });
+  async deleteById(id: string): Promise<CategoryEntity> {
+    return this.prisma.category.delete({ where: { id } });
   }
 }
